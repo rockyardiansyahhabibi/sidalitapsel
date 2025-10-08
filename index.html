@@ -11,6 +11,220 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
+  <script>
+/* ========= KONFIG ========= */
+const SPREADSHEET_ID = "1m3jITIs6dLgWQBrLwt-uKWHbGR8O88s1RNzmGQVwwJo";
+
+// GID sesuai yang kamu sebut:
+const GID_CAMAT = "0";           // Sheet "Data Camat" (daftar kecamatan)
+const GID_LURAH = "1313636829";  // Sheet "Data Lurah" (ada kolom Kecamatan & Kelurahan/Desa)
+
+// Link tombol "Lihat Sheet"
+document.getElementById("sheetLink").href = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit#gid=${GID_LURAH}`;
+
+/* ========= UTIL: Ambil & Parsir GViz JSON ========= */
+/* Google mengembalikan response "function (...) {...}" jadi kita potong dulu */
+async function fetchGviz(spreadsheetId, gid) {
+  const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&gid=${gid}`;
+  const res = await fetch(url, { cache: "no-store" });
+  const text = await res.text();
+  // buang pembungkus "/*O_o*/\ngoogle.visualization.Query.setResponse(...);"
+  const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
+  return json;
+}
+
+/* Ubah respon GViz jadi array of objects: [{header1: val1, header2: val2, ...}, ...] */
+function gvizToObjects(gvizJson) {
+  const cols = gvizJson.table.cols.map(c => (c.label || c.id || "").trim());
+  const rows = (gvizJson.table.rows || []).map(r => {
+    const o = {};
+    cols.forEach((label, i) => {
+      const cell = r.c[i];
+      o[label] = cell ? (cell.v ?? "") : "";
+    });
+    return o;
+  });
+  return rows;
+}
+
+/* Cari nama kolom yang “mirip” dengan keyword (toleran spasi/garis miring) */
+function findColumnKey(headers, ...keywords) {
+  // headers: array of header strings
+  const norm = s => s.toLowerCase().replace(/\s+/g, "").replace(/[\/\-_.]/g, "");
+  const H = headers.map(h => ({ raw: h, n: norm(h) }));
+  const K = keywords.map(k => norm(k));
+  // cari yang mengandung semua kata kunci (atau minimal salah satu yang cocok)
+  for (const h of H) {
+    if (K.some(k => h.n.includes(k))) return h.raw;
+  }
+  return null;
+}
+
+/* Hitung frekuensi per nilai */
+function countBy(arr, key) {
+  const m = new Map();
+  for (const it of arr) {
+    const val = (it[key] ?? "").toString().trim();
+    if (!val) continue;
+    m.set(val, (m.get(val) || 0) + 1);
+  }
+  return m;
+}
+
+/* ========= GRAFIK SEDERHANA DI <canvas> (tanpa library) ========= */
+function drawBarChart(canvasId, labels, values, title = "") {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+
+  // reset
+  ctx.clearRect(0, 0, W, H);
+  ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+  ctx.textBaseline = "middle";
+
+  // padding
+  const padL = 80, padR = 24, padT = 40, padB = 48;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+
+  // judul
+  ctx.textAlign = "left";
+  ctx.fillText(title, padL, padT - 22);
+
+  // sumbu
+  ctx.strokeStyle = "#e5e7eb";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  // X-axis
+  ctx.moveTo(padL, H - padB);
+  ctx.lineTo(W - padR, H - padB);
+  // Y-axis
+  ctx.moveTo(padL, padT);
+  ctx.lineTo(padL, H - padB);
+  ctx.stroke();
+
+  const maxV = Math.max(1, ...values);
+  const barGap = 12;
+  const n = values.length;
+  const barW = Math.max(8, (chartW - barGap * (n + 1)) / n);
+
+  // grid & label Y (4 garis)
+  ctx.fillStyle = "#6b7280";
+  ctx.textAlign = "right";
+  const ticks = 4;
+  for (let i = 0; i <= ticks; i++) {
+    const yVal = (maxV / ticks) * i;
+    const y = H - padB - (yVal / maxV) * chartH;
+    ctx.strokeStyle = "#f3f4f6";
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+    ctx.fillStyle = "#6b7280";
+    ctx.fillText(Math.round(yVal), padL - 8, y);
+  }
+
+  // bars
+  for (let i = 0; i < n; i++) {
+    const v = values[i];
+    const x = padL + barGap + i * (barW + barGap);
+    const h = (v / maxV) * chartH;
+    const y = H - padB - h;
+
+    // batang
+    ctx.fillStyle = "#6366f1"; // (biarkan default; boleh ganti jika perlu)
+    ctx.fillRect(x, y, barW, h);
+    // nilai di atas batang
+    ctx.fillStyle = "#111827";
+    ctx.textAlign = "center";
+    ctx.fillText(String(v), x + barW / 2, y - 12);
+
+    // label X (dibatasi agar rapi)
+    ctx.fillStyle = "#374151";
+    const lbl = labels[i].length > 10 ? labels[i].slice(0, 10) + "…" : labels[i];
+    ctx.save();
+    ctx.translate(x + barW / 2, H - padB + 16);
+    ctx.rotate(-Math.PI / 6); // miring sedikit agar muat
+    ctx.fillText(lbl, 0, 0);
+    ctx.restore();
+  }
+}
+
+/* ========= PIPELINE: Ambil data & isi elemen ========= */
+(async function main() {
+  try {
+    // 1) Ambil data dari dua sheet
+    const [jCamat, jLurah] = await Promise.all([
+      fetchGviz(SPREADSHEET_ID, GID_CAMAT),
+      fetchGviz(SPREADSHEET_ID, GID_LURAH),
+    ]);
+
+    const camatRows = gvizToObjects(jCamat);
+    const lurahRows = gvizToObjects(jLurah);
+
+    // 2) Deteksi nama kolom yang relevan secara dinamis
+    const camatHeaders = Object.keys(camatRows[0] || {});
+    const lurahHeaders = Object.keys(lurahRows[0] || {});
+
+    const colKecCamat = findColumnKey(camatHeaders, "kecamatan"); // di Data Camat
+    // Di Data Lurah: butuh 'kecamatan' dan 'kelurahan/desa'
+    const colKecLurah = findColumnKey(lurahHeaders, "kecamatan");
+    const colKelDesa  = findColumnKey(lurahHeaders, "kelurahan", "desa", "kelurahandesa", "nagori", "gampong");
+
+    // 3) Hitung ringkasan
+    // Baris Data = jumlah baris Data Lurah (lebih representatif untuk unit kel/desa)
+    const totalRows = lurahRows.filter(r => Object.values(r).some(v => (v ?? "").toString().trim())).length;
+
+    // Jumlah kecamatan: dari Data Camat (unik)
+    const setKec = new Set(
+      camatRows.map(r => (r[colKecCamat] ?? "").toString().trim()).filter(Boolean)
+    );
+    const totalKec = setKec.size || 0;
+
+    // Jumlah kel/desa: dari Data Lurah, hitung unik di kolom kel/desa
+    let totalKel = 0;
+    if (colKelDesa) {
+      const setKel = new Set(
+        lurahRows.map(r => (r[colKelDesa] ?? "").toString().trim()).filter(Boolean)
+      );
+      totalKel = setKel.size;
+    } else {
+      // fallback: pakai jumlah baris sebagai pendekatan
+      totalKel = totalRows;
+    }
+
+    // 4) Tulis ke stat box
+    document.getElementById("statRows").textContent = String(totalRows);
+    document.getElementById("statKec").textContent  = String(totalKec);
+    document.getElementById("statKel").textContent  = String(totalKel);
+
+    // 5) Siapkan data grafik: jumlah kel/desa per kecamatan (dari Data Lurah)
+    let chartLabels = [], chartValues = [];
+    if (colKecLurah) {
+      const counts = {};
+      for (const r of lurahRows) {
+        const k = (r[colKecLurah] ?? "").toString().trim();
+        if (!k) continue;
+        counts[k] = (counts[k] || 0) + 1;
+      }
+      // sort desc & ambil top N (misal 12 agar muat)
+      const entries = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, 12);
+      chartLabels = entries.map(e => e[0]);
+      chartValues = entries.map(e => e[1]);
+    } else if (colKecCamat) {
+      // fallback: tampilkan semua kecamatan dengan nilai 1
+      chartLabels = Array.from(setKec);
+      chartValues = chartLabels.map(() => 1);
+    }
+
+    drawBarChart("chartKec", chartLabels, chartValues, "Jumlah Kelurahan/Desa per Kecamatan (Top 12)");
+
+  } catch (err) {
+    console.error("Gagal memuat data:", err);
+    // Optional: tampilkan pesan ke UI
+    // document.querySelector('#tab-infografis .muted').textContent = 'Gagal memuat data.';
+  }
+})();
+</script>
+
 <body>
   <div class="bg-ornament"></div>
   <header class="topbar">

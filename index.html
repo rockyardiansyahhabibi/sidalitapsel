@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Si-Dali Tapsel — Integrasi Data Kecamatan & Kelurahan</title>
+  <meta name="description" content="Integrasi Data Kecamatan, Kelurahan, dan Kepling — Tapanuli Selatan"/>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <header class="container">
+    <h1>Si‑Dali Tapsel</h1>
+    <p class="subtitle">Integrasi Data Kecamatan & Kelurahan — Tapanuli Selatan</p>
+  </header>
+
+  <section class="container card">
+    <h2>Filter & Pencarian</h2>
+    <div class="filters">
+      <input id="q" type="search" placeholder="Cari nama Kecamatan / Kelurahan / Kepling..." />
+      <select id="kecamatan"></select>
+      <button id="refresh">Muat Ulang</button>
+    </div>
+    <p id="status" class="status">Memuat data…</p>
+  </section>
+
+  <section class="container card">
+    <div class="table-wrap">
+      <table id="table">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div id="count" class="count"></div>
+  </section>
+
+  <footer class="container footer">
+    <small>© <span id="year"></span> Pemkab Tapanuli Selatan — Si‑Dali Tapsel •
+      <a id="sheetLink" target="_blank" rel="noopener">Sumber Sheet</a></small>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

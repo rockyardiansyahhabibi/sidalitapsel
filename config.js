@@ -3,6 +3,11 @@
 const SHEET_ID = "1m3jITIs6dLgWQBrLwt-uKWHbGR8O88s1RNzmGQVwwJo";
 const GID = "0";
 
+window.SIDALI_CONFIG = {
+  BRAND: {LOGO_PEMKAB: "https://drive.google.com/file/d/1SMBJAKKvfbXLdWPLgd9mlJwPA_tKnOe3/view?usp=sharing",
+    LOGO_SIDALI: "https://drive.google.com/file/d/1SxmyRuRI_1GS3yt7AdOxoki5j7q78_q7/view?usp=sharing",}
+];
+
 // Master tabel (ubah sesuai URL)
 const CAMAT   = { SHEET_ID: "1m3jITIs6dLgWQBrLwt-uKWHbGR8O88s1RNzmGQVwwJo", GID: "0" };
 const LURAH   = { SHEET_ID: "1m3jITIs6dLgWQBrLwt-uKWHbGR8O88s1RNzmGQVwwJo", GID: "0" };

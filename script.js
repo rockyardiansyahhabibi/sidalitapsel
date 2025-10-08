@@ -30,7 +30,8 @@ $$('.nav a').forEach(a=>a.addEventListener('click',()=>{
 
 // === Beranda: isi profil & link + sinkron statistik dari Sheet ===
 async function fetchCSV({SHEET_ID, GID}){
-  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
+  const url=`https://docs.google.com/spreadsheets/d/1m3jITIs6dLgWQBrLwt-uKWHbGR8O88s1RNzmGQVwwJo/export?format=csv&gid=0
+`;
   const res = await fetch(url,{cache:'no-store'});
   if(!res.ok) throw new Error('CSV fetch failed'); const text = await res.text();
   return toObjects(parseCSV(text));

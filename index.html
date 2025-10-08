@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Si-Dali Tapsel — Portal Resmi</title>
+  <meta name="description" content="Beranda informasi Kabupaten Tapanuli Selatan dan Portal Data Si-Dali Tapsel">
+  <link rel="icon" type="image/png" href="assets/sidali.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="bg-ornament"></div>
+  <header class="topbar">
+    <div class="container row">
+      <div class="brand">
+        <img class="logo pemkab" src="assets/lambang-tapsel.png" alt="Pemkab Tapanuli Selatan" height="40">
+        <div class="divider"></div>
+        <img class="logo sidali" src="assets/sidali.png" alt="Logo Si-Dali Tapsel" height="40">
+        <div class="meta">
+          <strong>Si-Dali Tapsel</strong>
+          <span>Portal Data & Informasi Kabupaten Tapanuli Selatan</span>
+          <small class="unit">Bagian Tata Pemerintahan – Sekretariat Daerah Kabupaten Tapanuli Selatan</small>
+        </div>
+      </div>
+      <nav class="nav">
+        <a data-tab="#tab-beranda" class="active">Beranda</a>
+        <a data-tab="#tab-infografis">Infografis</a>
+        <a data-tab="#tab-tabel">Tabel</a>
+        <a data-tab="#tab-form">Kirim Data</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- TAB: BERANDA -->
+    <section id="tab-beranda" class="tab card active">
+      <div class="hero2">
+        <div>
+          <h1>Kabupaten <span class="accent">Tapanuli Selatan</span></h1>
+          <p class="lead">Kabupaten di Provinsi Sumatera Utara dengan ibu kota di <strong>Sipirok</strong>. Wilayahnya membentang dari pegunungan Bukit Barisan hingga lembah dan aliran sungai Batang Toru, kaya potensi agrikultur, energi, dan budaya Mandailing/Angkola.</p>
+          <div class="badges">
+            <span class="badge">Pelayanan Publik</span>
+            <span class="badge">Data Terbuka</span>
+            <span class="badge">Kolaboratif</span>
+          </div>
+        </div>
+        <div class="hero-card">
+          <div class="stat">
+            <div class="stat-num" id="b-statKec">—</div>
+            <div class="stat-label">Kecamatan</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num" id="b-statKel">—</div>
+            <div class="stat-label">Kelurahan/Desa</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num" id="b-statPenduduk">—</div>
+            <div class="stat-label">Perkiraan Penduduk*</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2 mt16">
+        <div class="panel">
+          <h3>Profil Singkat</h3>
+          <ul class="bullets" id="profilList">
+            <!-- Diisi dari config.js (PROFIL_TAPSEL) -->
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Peta Lokasi</h3>
+          <div class="mapwrap">
+            <iframe class="mapframe" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+              src="https://www.google.com/maps?q=Tapanuli%20Selatan&output=embed"></iframe>
+          </div>
+          <small class="muted">*Gunakan tombol di bawah untuk membuka peta penuh.</small>
+          <div class="right mt8">
+            <a class="btn ghost" target="_blank" rel="noopener" href="https://maps.google.com/?q=Tapanuli+Selatan">Buka di Google Maps</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Link Layanan Cepat</h3>
+        <div class="links" id="quickLinks"></div>
+      </div>
+
+      <small class="muted">Catatan: Angka kecamatan/kelurahan diambil dari sumber Sheet pada tab Infografis agar sinkron.</small>
+    </section>
+
+    <!-- TAB: INFOGRAFIS -->
+    <section id="tab-infografis" class="tab card">
+      <h2>Infografis</h2>
+      <p class="muted">Ringkasan jumlah Kecamatan dan Kelurahan/Desa dari sumber Sheet.</p>
+      <div class="hero-card">
+        <div class="stat">
+          <div class="stat-num" id="statRows">0</div>
+          <div class="stat-label">Baris Data</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="statKec">0</div>
+          <div class="stat-label">Kecamatan</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="statKel">0</div>
+          <div class="stat-label">Kelurahan/Desa</div>
+        </div>
+      </div>
+      <canvas id="chartKec" width="900" height="360" class="canvas"></canvas>
+      <div class="right mt8">
+        <a id="sheetLink" class="btn ghost" target="_blank" rel="noopener">Lihat Sheet</a>
+      </div>
+    </section>
+
+    <!-- TAB: TABEL MASTER -->
+    <section id="tab-tabel" class="tab card">
+      <h2>Tabel Master</h2>
+      <div class="tabs">
+        <button class="subtab active" data-sub="#tbl-camat">Data Camat</button>
+        <button class="subtab" data-sub="#tbl-lurah">Data Lurah</button>
+        <button class="subtab" data-sub="#tbl-kepling">Data Kepala Lingkungan</button>
+      </div>
+
+      <div id="tbl-camat" class="sub active">
+        <div class="table-wrap">
+          <table><thead id="th-camat"></thead><tbody id="tb-camat"></tbody></table>
+        </div>
+      </div>
+
+      <div id="tbl-lurah" class="sub">
+        <div class="table-wrap">
+          <table><thead id="th-lurah"></thead><tbody id="tb-lurah"></tbody></table>
+        </div>
+      </div>
+
+      <div id="tbl-kepling" class="sub">
+        <div class="table-wrap">
+          <table><thead id="th-kepling"></thead><tbody id="tb-kepling"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: FORM -->
+    <section id="tab-form" class="tab card">
+      <h2>Kirim Data Pembaruan</h2>
+      <p class="muted">Pihak luar (OPD, desa/kelurahan, masyarakat) dapat mengirimkan pembaruan data. Data masuk ke Google Sheet melalui Web App (Apps Script).</p>
+      <form id="submitForm" class="grid">
+        <div class="field">
+          <label for="f_kec">Kecamatan <span>*</span></label>
+          <input id="f_kec" name="kecamatan" required placeholder="Contoh: Batang Toru">
+        </div>
+        <div class="field">
+          <label for="f_kel">Kelurahan/Desa <span>*</span></label>
+          <input id="f_kel" name="kelurahan" required placeholder="Contoh: Wek IV">
+        </div>
+        <div class="field"><label for="f_kepling">Kepala Lingkungan</label><input id="f_kepling" name="kepling"></div>
+        <div class="field"><label for="f_alamat">Alamat/Koordinat</label><input id="f_alamat" name="alamat"></div>
+        <div class="field"><label for="f_kontak">Kontak</label><input id="f_kontak" name="kontak"></div>
+        <div class="field"><label for="f_catatan">Catatan</label><input id="f_catatan" name="catatan"></div>
+        <div class="field"><label for="f_sumber">Sumber Data</label><input id="f_sumber" name="sumber"></div>
+        <div class="actions"><button class="btn" type="submit">Kirim</button><button class="btn ghost" type="reset">Reset</button></div>
+      </form>
+      <p id="formStatus" class="status"></p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container row foot">
+      <div class="foot-brand">
+        <img src="assets/sidali.png" alt="Si-Dali" height="20">
+        <small>© <span id="year"></span> Pemerintah Kabupaten Tapanuli Selatan • Si-Dali Tapsel</small>
+      </div>
+      <small>Developed by ASN Tapanuli Selatan • <strong>BerAKHLAK</strong></small>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

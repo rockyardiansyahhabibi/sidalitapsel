@@ -103,3 +103,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   $("#year").textContent = new Date().getFullYear();
   loadBeranda(); loadInfografis(); loadMasters();
 });
+document.querySelector("img.logo.pemkab").src = SIDALI_CONFIG.BRAND.LOGO_PEMKAB;
+document.querySelector("img.logo.sidali").src  = SIDALI_CONFIG.BRAND.LOGO_SIDALI;
+});
